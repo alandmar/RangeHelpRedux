@@ -1,0 +1,17 @@
+<Bindings>
+	<Binding name="RHRSPELLKEY1" header="RANGEHELPREDUXBIND">
+		RangeHelpReduxKeyBindFunc("RHRSPELLKEY1");
+	</Binding>
+
+	<Binding name="RHRSPELLKEY2">
+		RangeHelpReduxKeyBindFunc("RHRSPELLKEY2");
+	</Binding>
+
+	<Binding name="RHRSPELLKEY3">
+		RangeHelpReduxKeyBindFunc("RHRSPELLKEY3");
+	</Binding>
+
+	<Binding name="RHRSPELLKEY4">
+		RangeHelpReduxKeyBindFunc("RHRSPELLKEY4");
+	</Binding>
+</Bindings>
