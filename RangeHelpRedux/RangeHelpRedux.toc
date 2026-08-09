@@ -1,7 +1,7 @@
 ## Interface: 11509, 20506, 30405
 ## Title: RangeHelp Redux
-## Notes: Displays target range status and switches action bars based on range. Configure with /rhr
-## Author: Ralenod (Original), Redux rewrite for current Classic Era / TBC / Wrath clients
+## Notes: Displays target range status (melee/range/dead zone/out of range) and casts range-appropriate spells from a keybind. Configure with /rhr
+## Author: Ralenod (Original), Lumbergh-Whitemane (Redux rewrite for current Classic Era / TBC / Wrath clients)
 ## Version: 1.0.0
 ## SavedVariablesPerCharacter: RangeHelpReduxDB
 ## X-Category: Combat
