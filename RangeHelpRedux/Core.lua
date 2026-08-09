@@ -127,17 +127,12 @@ function Addon:GetDefaults()
 	local _, englishClass = UnitClass("player")
 	return {
 		enabled = (englishClass == "HUNTER"),
-		lockDuringCombat = true,
 		hideRangeInfo = false,
-		enableBarSwitch = true,
-		switchAtDeadZone = false,
 		customSpellEnabled = false,
 		meleeSpellName = L.MELEE_SPELLS[1],
 		rangeSpellName = L.RANGE_SPELLS[1],
 		meleeSlot = -1,
 		rangeSlot = -1,
-		meleeBarPage = 2,
-		rangeBarPage = 1,
 		ui = {
 			resize = false,
 			move = true,
@@ -221,49 +216,10 @@ function Addon:HasBuffBySpellId(spellId)
 end
 
 --------------------------------------------------------------------------
--- Action bar page switching (respects combat lockdown - protected call)
---------------------------------------------------------------------------
-
-function Addon:ChangeBarPage(page)
-	if not page or InCombatLockdown() then
-		return
-	end
-	if GetActionBarPage() ~= page then
-		ChangeActionBarPage(page)
-	end
-end
-
---------------------------------------------------------------------------
 -- Main range/state update loop
 --------------------------------------------------------------------------
 
 Addon.currentState = 0 -- 0 notarget, 1 melee, 2 range, 3 dead zone, 4 out of range
-
-local function applyBarSwitch(db, prevState, newState)
-	if not db.enableBarSwitch then
-		return
-	end
-	if newState == 1 then
-		if prevState ~= 1 or db.lockDuringCombat then
-			Addon:ChangeBarPage(db.meleeBarPage)
-		end
-		return
-	end
-
-	if prevState < 2 or db.lockDuringCombat then
-		local page = db.rangeBarPage
-		if newState == 3 and db.switchAtDeadZone then
-			page = db.meleeBarPage
-		end
-		Addon:ChangeBarPage(page)
-	elseif db.switchAtDeadZone then
-		if prevState == 3 and (newState == 2 or newState == 4) then
-			Addon:ChangeBarPage(db.rangeBarPage)
-		elseif (prevState == 2 or prevState == 4) and newState == 3 then
-			Addon:ChangeBarPage(db.meleeBarPage)
-		end
-	end
-end
 
 Addon.STATUS_STATE_KEYS = { "meleeUi", "deadUi", "rangeUi", "oorUi" }
 Addon.ALL_STATE_KEYS = { "meleeUi", "deadUi", "rangeUi", "oorUi", "noTargUi" }
@@ -290,7 +246,6 @@ function Addon:UpdateState()
 	if not (UnitExists("target") and not UnitIsDead("target") and UnitCanAttack("player", "target")) then
 		if self.currentState ~= 0 then
 			self:HideStatusFrame()
-			applyBarSwitch(db, self.currentState, 0)
 			self.currentState = 0
 		end
 		return
@@ -322,7 +277,6 @@ function Addon:UpdateState()
 	end
 
 	local prevState = self.currentState
-	applyBarSwitch(db, prevState, newState)
 
 	if newState ~= prevState then
 		self:SetStatusFrameState(STATE_KEY_BY_NUMBER[newState])

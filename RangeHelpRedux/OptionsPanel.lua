@@ -1,7 +1,7 @@
 local Addon = RangeHelpRedux
 local L = RangeHelpReduxLocale
 
-local panel = Addon:CreateDialogFrame("RangeHelpReduxOptionsFrame", 300, 510)
+local panel = Addon:CreateDialogFrame("RangeHelpReduxOptionsFrame", 300, 380)
 Addon.optionsPanel = panel
 
 local version = GetAddOnMetadata and GetAddOnMetadata("RangeHelpRedux", "Version") or "1.0.0"
@@ -19,6 +19,16 @@ local function label(parent, text, anchorFrame, x, y)
 	return fs
 end
 
+local function attachTooltip(widget, text)
+	widget:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(text, nil, nil, nil, nil, true)
+	end)
+	widget:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+end
+
 label(panel, L.OPT_MELEE_SPELL, panel, 24, -40)
 local meleeSpellEdit = Addon:CreateEditBox(panel, "RangeHelpReduxMeleeSpellEdit", 150, 20)
 meleeSpellEdit:SetPoint("TOPLEFT", panel, "TOPLEFT", 130, -40)
@@ -27,30 +37,11 @@ label(panel, L.OPT_RANGE_SPELL, panel, 24, -70)
 local rangeSpellEdit = Addon:CreateEditBox(panel, "RangeHelpReduxRangeSpellEdit", 150, 20)
 rangeSpellEdit:SetPoint("TOPLEFT", panel, "TOPLEFT", 130, -70)
 
-label(panel, L.OPT_MELEE_BAR, panel, 24, -100)
-local meleeBarEdit = Addon:CreateEditBox(panel, "RangeHelpReduxMeleeBarEdit", 40, 20)
-meleeBarEdit:SetPoint("TOPLEFT", panel, "TOPLEFT", 130, -100)
-meleeBarEdit:SetNumeric(true)
-
-label(panel, L.OPT_RANGE_BAR, panel, 24, -130)
-local rangeBarEdit = Addon:CreateEditBox(panel, "RangeHelpReduxRangeBarEdit", 40, 20)
-rangeBarEdit:SetPoint("TOPLEFT", panel, "TOPLEFT", 130, -130)
-rangeBarEdit:SetNumeric(true)
-
-local lockCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxLockCheck", L.OPT_LOCK_COMBAT_BAR)
-lockCheck:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -165)
-
 local hideCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxHideCheck", L.OPT_HIDE_RANGE_INFO)
-hideCheck:SetPoint("TOPLEFT", lockCheck, "BOTTOMLEFT", 0, -6)
-
-local deadZoneCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxDeadZoneCheck", L.OPT_DEADZONE_MELEE_PAGE)
-deadZoneCheck:SetPoint("TOPLEFT", hideCheck, "BOTTOMLEFT", 0, -6)
-
-local enableBarSwitchCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxEnableBarSwitchCheck", L.OPT_ENABLE_BARSWITCH)
-enableBarSwitchCheck:SetPoint("TOPLEFT", deadZoneCheck, "BOTTOMLEFT", 0, -6)
+hideCheck:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -105)
 
 local enableCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxEnableCheck", L.OPT_ENABLE_RANGEHELP)
-enableCheck:SetPoint("TOPLEFT", enableBarSwitchCheck, "BOTTOMLEFT", 0, -6)
+enableCheck:SetPoint("TOPLEFT", hideCheck, "BOTTOMLEFT", 0, -6)
 
 local custSpellBtn = Addon:CreateButton(panel, "RangeHelpReduxCustSpellBtn", 250, 25, L.BTN_ENABLE_CUST_SPELL, nil)
 custSpellBtn:SetPoint("TOPLEFT", enableCheck, "BOTTOMLEFT", 4, -20)
@@ -64,11 +55,16 @@ confirmBtn:SetPoint("LEFT", applyBtn, "RIGHT", 4, 0)
 local cancelBtn = Addon:CreateButton(panel, "RangeHelpReduxCancelBtn", 75, 25, L.BTN_CANCEL, nil)
 cancelBtn:SetPoint("LEFT", confirmBtn, "RIGHT", 4, 0)
 
+-- applyBtn's own TOPLEFT sits at local x=28 (20 panel margin + 4 + 4 from the
+-- checkbox/button chain above), so its "BOTTOM" anchor point (its own
+-- horizontal center) is at x=65.5. Offsetting by +84.5 centers a 250-wide
+-- button on the 300-wide panel (center x=150).
 local custUIBtn = Addon:CreateButton(panel, "RangeHelpReduxCustUIBtn", 250, 25, L.BTN_CUSTOMISE_UI, nil)
-custUIBtn:SetPoint("TOP", panel, "TOP", 0, -419)
+custUIBtn:SetPoint("TOP", applyBtn, "BOTTOM", 84.5, -20)
 
 local keyBindBtn = Addon:CreateButton(panel, "RangeHelpReduxKeyBindBtn", 250, 25, L.BTN_SPELL_KEY_BIND, nil)
 keyBindBtn:SetPoint("TOP", custUIBtn, "BOTTOM", 0, -10)
+attachTooltip(keyBindBtn, L.OPT_KEYBIND_TOOLTIP)
 
 --------------------------------------------------------------------------
 -- Behaviour
@@ -103,34 +99,17 @@ local function ApplyBut()
 
 	local meleeText = db.customSpellEnabled and meleeSpellEdit:GetText() or nil
 	local rangeText = db.customSpellEnabled and rangeSpellEdit:GetText() or nil
-	local barSwitchEnabled = enableBarSwitchCheck:GetChecked() and true or false
 
-	if (db.customSpellEnabled and ((meleeText or "") == "" or (rangeText or "") == ""))
-		or (barSwitchEnabled and (meleeBarEdit:GetText() == "" or rangeBarEdit:GetText() == "")) then
+	if db.customSpellEnabled and ((meleeText or "") == "" or (rangeText or "") == "") then
 		Addon:Print(L.ERR_FILL_FIELDS)
 		return false
-	end
-
-	local mp, rp = db.meleeBarPage, db.rangeBarPage
-	if barSwitchEnabled then
-		mp = math.abs(tonumber(meleeBarEdit:GetText()) or 0)
-		rp = math.abs(tonumber(rangeBarEdit:GetText()) or 0)
-		if mp < 1 or mp > NUM_ACTIONBAR_PAGES or rp < 1 or rp > NUM_ACTIONBAR_PAGES then
-			Addon:Print(L.ERR_INVALID_PAGE:format(NUM_ACTIONBAR_PAGES))
-			return false
-		end
 	end
 
 	if db.customSpellEnabled then
 		db.meleeSpellName = meleeText
 		db.rangeSpellName = rangeText
 	end
-	db.meleeBarPage = mp
-	db.rangeBarPage = rp
-	db.lockDuringCombat = lockCheck:GetChecked() and true or false
 	db.hideRangeInfo = hideCheck:GetChecked() and true or false
-	db.switchAtDeadZone = deadZoneCheck:GetChecked() and true or false
-	db.enableBarSwitch = barSwitchEnabled
 
 	Addon:OnEnabledChanged()
 	RefreshSpellDisplay()
@@ -173,12 +152,7 @@ panel:SetScript("OnShow", function()
 	end
 	Addon:UpdateSlots()
 	RefreshSpellDisplay()
-	meleeBarEdit:SetText(tostring(db.meleeBarPage))
-	rangeBarEdit:SetText(tostring(db.rangeBarPage))
-	lockCheck:SetChecked(db.lockDuringCombat)
 	hideCheck:SetChecked(db.hideRangeInfo)
-	deadZoneCheck:SetChecked(db.switchAtDeadZone)
-	enableBarSwitchCheck:SetChecked(db.enableBarSwitch)
 	enableCheck:SetChecked(db.enabled)
 end)
 
