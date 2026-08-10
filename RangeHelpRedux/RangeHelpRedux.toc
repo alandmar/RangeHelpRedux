@@ -1,15 +1,17 @@
 ## Interface: 11509, 20506, 30405
 ## Title: RangeHelp Redux
-## Notes: Displays target range status (melee/range/dead zone/out of range) and casts range-appropriate spells from a keybind. Configure with /rhr
+## Notes: Displays target range status (melee/range/dead zone/out of range) with a best-guess yard estimate while in range. Configure with /rhr
 ## Author: Ralenod (Original), Lumbergh-Whitemane (Redux rewrite for current Classic Era / TBC / Wrath clients)
 ## Version: 1.0.0
 ## SavedVariablesPerCharacter: RangeHelpReduxDB
 ## X-Category: Combat
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
 
 Locales.lua
 Core.lua
 StatusFrame.lua
 OptionsPanel.lua
 UICustomizePanel.lua
-SpellKeyBindPanel.lua
-Bindings.xml

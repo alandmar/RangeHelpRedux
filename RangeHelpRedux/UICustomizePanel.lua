@@ -44,13 +44,79 @@ fontLockCheck:SetPoint("TOPLEFT", borderLockCheck, "BOTTOMLEFT", 0, -6)
 local linkCheck = Addon:CreateCheckbox(panel, "RangeHelpReduxLinkCheck", L.UI_LINK_BG_BORDER)
 linkCheck:SetPoint("TOPLEFT", fontLockCheck, "BOTTOMLEFT", 0, -6)
 
-local stateDropdown = CreateFrame("Frame", "RangeHelpReduxStateDropdown", panel, "UIDropDownMenuTemplate")
+-- Deliberately NOT Blizzard's UIDropDownMenuTemplate: driving it taints
+-- shared UIDropDownMenu globals, which persist for the session and can end
+-- up blocking unrelated protected calls elsewhere. Self-contained picker.
+local stateDropdown = CreateFrame("Button", "RangeHelpReduxStateDropdown", panel, "UIPanelButtonTemplate")
+stateDropdown:SetSize(130, 22)
 stateDropdown:SetPoint("TOP", linkCheck, "BOTTOM", 50, -30)
-UIDropDownMenu_SetWidth(stateDropdown, 130)
+stateDropdown:SetText(L.UI_RANGE_STATE)
 
 local stateDropdownLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 stateDropdownLabel:SetPoint("BOTTOMLEFT", stateDropdown, "TOPLEFT", 20, 0)
 stateDropdownLabel:SetText(L.UI_RANGE_STATE)
+
+local stateDropdownList = CreateFrame("Frame", "RangeHelpReduxStateDropdownList", panel, "BackdropTemplate")
+stateDropdownList:SetPoint("TOP", stateDropdown, "BOTTOM", 0, -2)
+stateDropdownList:SetWidth(160)
+stateDropdownList:SetBackdrop({
+	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+	tile = true,
+	tileSize = 16,
+	edgeSize = 16,
+	insets = { left = 4, right = 4, top = 4, bottom = 4 },
+})
+stateDropdownList:SetBackdropColor(0, 0, 0, 1)
+stateDropdownList:SetFrameStrata("DIALOG")
+stateDropdownList:Hide()
+
+local selectedStateValue
+local ColorSetup -- forward declaration, assigned below
+
+local function SetSelectedStateValue(value, label)
+	selectedStateValue = value
+	stateDropdown:SetText(label or L.UI_RANGE_STATE)
+	stateDropdownList:Hide()
+	ColorSetup(value)
+end
+
+local function GetSelectedStateValue()
+	return selectedStateValue
+end
+
+local STATE_DROPDOWN_ENTRIES = {
+	{ text = L.STATE_MELEE, value = "meleeUi" },
+	{ text = L.STATE_DEADZONE, value = "deadUi" },
+	{ text = L.STATE_RANGE, value = "rangeUi" },
+	{ text = L.STATE_OUTOFRANGE, value = "oorUi" },
+	{ text = L.STATE_ALL, value = "all" },
+}
+
+local prevStateBtn
+for i, e in ipairs(STATE_DROPDOWN_ENTRIES) do
+	local sBtn = CreateFrame("Button", "RangeHelpReduxStateDropdownButton" .. i, stateDropdownList, "UIPanelButtonTemplate")
+	sBtn:SetSize(140, 20)
+	if prevStateBtn then
+		sBtn:SetPoint("TOP", prevStateBtn, "BOTTOM", 0, -2)
+	else
+		sBtn:SetPoint("TOP", stateDropdownList, "TOP", 0, -10)
+	end
+	sBtn:SetText(e.text)
+	sBtn:SetScript("OnClick", function()
+		SetSelectedStateValue(e.value, e.text)
+	end)
+	prevStateBtn = sBtn
+end
+stateDropdownList:SetHeight(#STATE_DROPDOWN_ENTRIES * 22 + 16)
+
+stateDropdown:SetScript("OnClick", function()
+	if stateDropdownList:IsShown() then
+		stateDropdownList:Hide()
+	else
+		stateDropdownList:Show()
+	end
+end)
 
 local bgColorBtn = Addon:CreateButton(panel, "RangeHelpReduxBGColorBtn", 160, 25, L.UI_BG_COLOUR, nil)
 bgColorBtn:SetPoint("TOP", stateDropdown, "BOTTOM", 30, -10)
@@ -134,8 +200,8 @@ fontColorBtn:SetScript("OnClick", function()
 	OpenColorPicker("font")
 end)
 
-local function ColorSetup(value)
-	value = value or UIDropDownMenu_GetSelectedValue(stateDropdown)
+ColorSetup = function(value)
+	value = value or GetSelectedStateValue()
 	if not value then
 		return
 	end
@@ -200,31 +266,8 @@ local function ColorSetup(value)
 	end
 end
 
-local function StateDropdown_OnClick(self)
-	UIDropDownMenu_SetSelectedValue(stateDropdown, self.value)
-	ColorSetup(self.value)
-end
-
-local function StateDropdown_Initialize()
-	local entries = {
-		{ text = L.STATE_MELEE, value = "meleeUi" },
-		{ text = L.STATE_DEADZONE, value = "deadUi" },
-		{ text = L.STATE_RANGE, value = "rangeUi" },
-		{ text = L.STATE_OUTOFRANGE, value = "oorUi" },
-		{ text = L.STATE_ALL, value = "all" },
-	}
-	for _, e in ipairs(entries) do
-		local info = UIDropDownMenu_CreateInfo()
-		info.text = e.text
-		info.value = e.value
-		info.func = StateDropdown_OnClick
-		UIDropDownMenu_AddButton(info)
-	end
-end
-UIDropDownMenu_Initialize(stateDropdown, StateDropdown_Initialize)
-
 stateTextEdit:SetScript("OnTextChanged", function(self)
-	local value = UIDropDownMenu_GetSelectedValue(stateDropdown)
+	local value = GetSelectedStateValue()
 	if value and value ~= "all" then
 		Addon.statusFrame.text:SetText(self:GetText())
 		tempColors[value].text = self:GetText()
@@ -346,7 +389,8 @@ defaultBtn:SetScript("OnClick", function()
 	bgColorBtn:Disable()
 	borderColorBtn:Disable()
 	fontColorBtn:Disable()
-	UIDropDownMenu_ClearAll(stateDropdown)
+	SetSelectedStateValue(nil)
+	stateDropdownList:Hide()
 	currentStateKey = nil
 	ResetPreviewFrame()
 	stateTextEdit:SetText("")
@@ -370,7 +414,8 @@ panel:SetScript("OnShow", function()
 	bgColorBtn:Disable()
 	borderColorBtn:Disable()
 	fontColorBtn:Disable()
-	UIDropDownMenu_ClearAll(stateDropdown)
+	SetSelectedStateValue(nil)
+	stateDropdownList:Hide()
 	currentStateKey = nil
 
 	tempColors = {}

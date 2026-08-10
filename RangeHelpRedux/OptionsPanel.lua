@@ -1,7 +1,7 @@
 local Addon = RangeHelpRedux
 local L = RangeHelpReduxLocale
 
-local panel = Addon:CreateDialogFrame("RangeHelpReduxOptionsFrame", 300, 380)
+local panel = Addon:CreateDialogFrame("RangeHelpReduxOptionsFrame", 300, 340)
 Addon.optionsPanel = panel
 
 local version = GetAddOnMetadata and GetAddOnMetadata("RangeHelpRedux", "Version") or "1.0.0"
@@ -17,16 +17,6 @@ local function label(parent, text, anchorFrame, x, y)
 	fs:SetJustifyH("LEFT")
 	fs:SetText(text)
 	return fs
-end
-
-local function attachTooltip(widget, text)
-	widget:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:SetText(text, nil, nil, nil, nil, true)
-	end)
-	widget:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
 end
 
 label(panel, L.OPT_MELEE_SPELL, panel, 24, -40)
@@ -61,10 +51,6 @@ cancelBtn:SetPoint("LEFT", confirmBtn, "RIGHT", 4, 0)
 -- button on the 300-wide panel (center x=150).
 local custUIBtn = Addon:CreateButton(panel, "RangeHelpReduxCustUIBtn", 250, 25, L.BTN_CUSTOMISE_UI, nil)
 custUIBtn:SetPoint("TOP", applyBtn, "BOTTOM", 84.5, -20)
-
-local keyBindBtn = Addon:CreateButton(panel, "RangeHelpReduxKeyBindBtn", 250, 25, L.BTN_SPELL_KEY_BIND, nil)
-keyBindBtn:SetPoint("TOP", custUIBtn, "BOTTOM", 0, -10)
-attachTooltip(keyBindBtn, L.OPT_KEYBIND_TOOLTIP)
 
 --------------------------------------------------------------------------
 -- Behaviour
@@ -127,9 +113,6 @@ cancelBtn:SetScript("OnClick", function()
 end)
 custUIBtn:SetScript("OnClick", function()
 	Addon:ToggleUICustomizePanel(true)
-end)
-keyBindBtn:SetScript("OnClick", function()
-	Addon:ToggleSpellKeyBindPanel(true)
 end)
 custSpellBtn:SetScript("OnClick", function()
 	local db = Addon.db

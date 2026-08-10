@@ -4,10 +4,9 @@ A ground-up rewrite of the classic *RangeHelp* addon for World of Warcraft, rebu
 
 ## Features
 
-- **Live range display** — a movable status frame shows whether your target is in Melee, Range, Dead Zone, or Out of Range at a glance.
+- **Live range display** — a movable status frame shows whether your target is in Melee, Range, Dead Zone, or Out of Range at a glance, with a best-guess yard estimate (e.g. "Range (20-25yd)") while you're in ranged range.
 - **Fully customizable status frame** — background, border, and font color/opacity per range state, custom text per state, resizable and movable.
 - **Automatic spell detection** — finds your melee and ranged abilities on your action bars automatically, or set custom spell names to use it on non-Hunter classes.
-- **Spell Key Bind** — bind up to 4 keys that cast a different spell or macro depending on your current range to target. This is the reliable way to get range-based abilities on a single keypress *during combat* — Blizzard blocks addons from switching action bar pages mid-fight, so this addon doesn't try to; Spell Key Bind casts directly off your keypress instead, which works everywhere action bar switching can't.
 - **Localization** — English, French, and German.
 
 ## Installation
@@ -18,14 +17,10 @@ Extract the addon so its files sit inside `Interface/AddOns/RangeHelpRedux/` in 
 
 - `/rhr` — open the main configuration panel
 - `/rhr ui` — customize the range status frame's appearance and colors
-- `/rhr spell` — set up the Spell Key Bind casting system
 
-### Setting up Spell Key Bind
+## Why there's no "auto-cast the right spell for my range" keybind
 
-1. Open WoW's **Key Bindings** menu and bind one or more of the "RangeHelp Redux Spell Keys" slots to a key of your choice.
-2. Type `/rhr spell` and select that key from the dropdown at the top.
-3. Drag a spell or macro from your spellbook or macro list onto each range state you want covered (Melee, Dead Zone, Range, Out of Range, No Target).
-4. Press your bound key in combat — RangeHelp Redux casts the right one for your current range automatically.
+Earlier builds tried this (a keybind that cast a different spell depending on melee/range/dead zone/out-of-range) but it's not achievable on the modern client: any function that both reads your addon-computed range state *and* triggers a protected action gets blocked by WoW's taint system once that state has ever been touched by non-hardware-event code (which live range tracking always is) — the same restriction that rules out switching action bar pages mid-fight. There's no reduced version of this that adds value over binding the spell directly with WoW's own keybinds, so it was removed. The status frame's live range display isn't affected by any of this, since it's pure UI, not a protected action.
 
 ## Credits
 

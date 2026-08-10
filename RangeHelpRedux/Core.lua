@@ -4,6 +4,8 @@ local L = RangeHelpReduxLocale
 RangeHelpRedux = RangeHelpRedux or {}
 local Addon = RangeHelpRedux
 
+Addon.RC = LibStub("LibRangeCheck-3.0-WildFork")
+
 Addon.MAX_BAR = 120
 Addon.DEAD_ZONE_INTERACT_INDEX = 4 -- CheckInteractDistance index 4 == ~28yd "follow" distance
 Addon.STATE_ORDER = { notarget = 0, meleeUi = 1, rangeUi = 2, deadUi = 3, oorUi = 4 }
@@ -42,7 +44,7 @@ function Addon:Print(msg)
 end
 
 --------------------------------------------------------------------------
--- Shared widget builders used by every panel (Options / UICustomize / SpellKeyBind)
+-- Shared widget builders used by every panel (Options / UICustomize)
 --------------------------------------------------------------------------
 
 function Addon:CreateDialogFrame(name, width, height)
@@ -149,12 +151,6 @@ function Addon:GetDefaults()
 				oorUi = stateColorDefaults(1, 0, 0, L.STATE_OUTOFRANGE),
 			},
 		},
-		keyBinds = {
-			RHRSPELLKEY1 = {},
-			RHRSPELLKEY2 = {},
-			RHRSPELLKEY3 = {},
-			RHRSPELLKEY4 = {},
-		},
 	}
 end
 
@@ -193,26 +189,6 @@ function Addon:UpdateSlots()
 
 	db.meleeSlot = scanForSpell(meleeCandidates)
 	db.rangeSlot = scanForSpell(rangeCandidates)
-end
-
---------------------------------------------------------------------------
--- Buff check (used before casting a key-bound spell, if requested)
---------------------------------------------------------------------------
-
-function Addon:HasBuffBySpellId(spellId)
-	if not spellId then
-		return false
-	end
-	for i = 1, 40 do
-		local name, _, _, _, _, _, _, _, _, id = UnitAura("player", i, "HELPFUL")
-		if not name then
-			break
-		end
-		if id == spellId then
-			return true
-		end
-	end
-	return false
 end
 
 --------------------------------------------------------------------------
@@ -281,6 +257,10 @@ function Addon:UpdateState()
 	if newState ~= prevState then
 		self:SetStatusFrameState(STATE_KEY_BY_NUMBER[newState])
 		self.currentState = newState
+	end
+
+	if newState == 2 then
+		self:UpdateRangeDistanceText()
 	end
 end
 
@@ -353,8 +333,6 @@ SlashCmdList["RANGEHELPREDUX"] = function(msg)
 	msg = msg and msg:lower():match("^%s*(.-)%s*$") or ""
 	if msg == "ui" then
 		Addon:ToggleUICustomizePanel()
-	elseif msg == "spell" then
-		Addon:ToggleSpellKeyBindPanel()
 	else
 		Addon:ToggleOptionsPanel()
 	end

@@ -140,6 +140,28 @@ function Addon:SetStatusFrameState(stateKey)
 	frame.text:SetText(state.text)
 end
 
+-- Best-guess yard estimate for the "Range" state, via LibRangeCheck-3.0 (same
+-- technique TargetRange/!Ranges-style addons use: bracket the target's
+-- distance between the nearest known spell/item range checkers). WoW doesn't
+-- expose exact distance to the API, so this is a bracket, not a precise
+-- number - purely informational, no protected calls involved.
+function Addon:UpdateRangeDistanceText()
+	local state = self.db.ui.states.rangeUi
+	if not state or not self.RC then
+		return
+	end
+	local minRange, maxRange = self.RC:GetRange("target")
+	local text = state.text
+	if minRange then
+		if maxRange then
+			text = string.format("%s (%d-%dyd)", state.text, minRange, maxRange)
+		else
+			text = string.format("%s (%d+yd)", state.text, minRange)
+		end
+	end
+	self.statusFrame.text:SetText(text)
+end
+
 function Addon:SetStatusFrameRaw(text, r, g, b)
 	local frame = self.statusFrame
 	frame:SetBackdropColor(1, 1, 1, 1)
