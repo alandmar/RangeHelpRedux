@@ -2,7 +2,7 @@
 ## Title: RangeHelp Redux
 ## Notes: Displays target range status (melee/range/dead zone/out of range) with a best-guess yard estimate while in range. Configure with /rhr
 ## Author: Ralenod (Original), Lumbergh-Whitemane (Redux rewrite for current Classic Era / TBC / Wrath clients)
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariablesPerCharacter: RangeHelpReduxDB
 ## X-Category: Combat
 

@@ -4,7 +4,7 @@ local L = RangeHelpReduxLocale
 local panel = Addon:CreateDialogFrame("RangeHelpReduxUICustomizeFrame", 300, 520)
 Addon.uiCustomizePanel = panel
 
-local version = GetAddOnMetadata and GetAddOnMetadata("RangeHelpRedux", "Version") or "1.0.0"
+local version = GetAddOnMetadata and GetAddOnMetadata("RangeHelpRedux", "Version") or "1.1.0"
 panel.titleText:SetText(L.TITLE:format(version))
 
 local tempColors = {}
